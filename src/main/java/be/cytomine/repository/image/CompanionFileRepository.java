@@ -37,5 +37,7 @@ public interface CompanionFileRepository extends JpaRepository<CompanionFile, Lo
 
     Optional<CompanionFile> findByImageAndUploadedFile(AbstractImage abstractImage, UploadedFile uploadedFile);
 
+    CompanionFile findByImageAndType(AbstractImage abstractImage, String type);
+
     int countByImageAndType(AbstractImage image, String type);
 }

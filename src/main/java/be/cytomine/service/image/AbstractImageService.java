@@ -309,7 +309,7 @@ public class AbstractImageService extends ModelService {
 
     }
 
-    private boolean hasProfile(AbstractImage image) {
+    public boolean hasProfile(AbstractImage image) {
         return companionFileRepository.countByImageAndType(image, "HDF5")>0;
     }
 
