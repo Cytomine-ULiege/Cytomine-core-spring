@@ -32,6 +32,11 @@ public class LTreeType implements UserType {
         return  new int[] {Types.OTHER};
     }
 
+    @Override
+    public int getSqlType() {
+        return 0;
+    }
+
     @SuppressWarnings("rawtypes")
     public Class returnedClass() {
         return String.class;
@@ -46,8 +51,8 @@ public class LTreeType implements UserType {
     }
 
     @Override
-    public Object nullSafeGet(ResultSet rs, String[] names, SharedSessionContractImplementor session, Object owner) throws HibernateException, SQLException {
-        return rs.getString(names[0]);
+    public Object nullSafeGet(ResultSet rs, int position, SharedSessionContractImplementor session, Object owner) throws SQLException {
+        return null;
     }
 
     @Override
