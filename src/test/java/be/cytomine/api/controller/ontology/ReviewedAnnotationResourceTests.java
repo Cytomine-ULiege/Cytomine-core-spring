@@ -30,12 +30,9 @@ import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.repository.ontology.ReviewedAnnotationRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
-import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.StringUtils;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -53,16 +50,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -527,7 +522,7 @@ public class ReviewedAnnotationResourceTests {
 
 
     @Test
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     public void get_reviewed_annotation_crop() throws Exception {
         ReviewedAnnotation annotation = given_a_reviewed_annotation_with_valid_image_server(builder);
 
@@ -557,7 +552,7 @@ public class ReviewedAnnotationResourceTests {
     }
 
     @Test
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     public void get_reviewed_annotation_crop_mask() throws Exception {
         ReviewedAnnotation annotation = given_a_reviewed_annotation_with_valid_image_server(builder);
 
@@ -588,7 +583,7 @@ public class ReviewedAnnotationResourceTests {
 
 
     @Test
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     public void get_reviewed_annotation_alpha_mask() throws Exception {
         ReviewedAnnotation annotation = given_a_reviewed_annotation_with_valid_image_server(builder);
 

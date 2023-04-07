@@ -19,7 +19,6 @@ package be.cytomine.service.meta;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
@@ -37,10 +36,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.Query;
-import javax.persistence.Tuple;
-import javax.transaction.Transactional;
-import java.math.BigInteger;
+import jakarta.persistence.Query;
+import jakarta.persistence.Tuple;
+import jakarta.transaction.Transactional;
+
 import java.util.*;
 import java.util.stream.Collectors;
 

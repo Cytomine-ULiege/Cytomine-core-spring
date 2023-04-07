@@ -19,7 +19,7 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.util.Map;
