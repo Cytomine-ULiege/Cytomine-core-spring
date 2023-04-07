@@ -1,46 +1,51 @@
 package be.cytomine.config;
 
 /*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2009-2022. Authors: see NOTICE file.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import be.cytomine.config.security.ApiKeyFilter;
-import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.security.*;
 import be.cytomine.config.security.JWTConfigurer;
+import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.security.AjaxLogoutSuccessHandler;
+import be.cytomine.security.DomainUserDetailsService;
+import be.cytomine.security.SwitchUserFailureHandler;
+import be.cytomine.security.SwitchUserSuccessHandler;
 import be.cytomine.security.jwt.TokenProvider;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.ldap.core.support.BaseLdapPathContextSource;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.ldap.EmbeddedLdapServerContextSourceFactoryBean;
+import org.springframework.security.config.ldap.LdapPasswordComparisonAuthenticationManagerFactory;
 import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
-import jakarta.servlet.http.HttpServletResponse;
-
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
-public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+public class SecurityConfiguration {
 
     private final TokenProvider tokenProvider;
 
@@ -66,8 +71,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         filter.setFailureHandler(switchUserFailureHandler());
         filter.setUsernameParameter("username");
         filter.setSwitchUserUrl("/api/login/impersonate");
-        //filter.setSwitchFailureUrl("/api/login/switchUser");
-        //filter.setTargetUrl("/admin/user-management");
         return filter;
     }
 
@@ -91,77 +94,62 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return new MessageDigestPasswordEncoder("SHA-256");
     }
 
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(domainUserDetailsService).passwordEncoder(passwordEncoder());
+    @Bean
+    public EmbeddedLdapServerContextSourceFactoryBean contextSourceFactoryBean() {
+        EmbeddedLdapServerContextSourceFactoryBean contextSourceFactoryBean = EmbeddedLdapServerContextSourceFactoryBean.fromEmbeddedLdapServer();
+        contextSourceFactoryBean.setPort(0);
+        return contextSourceFactoryBean;
     }
 
-    @Override
-    public void configure(WebSecurity web) {
-        web.ignoring()
-                .antMatchers(HttpMethod.OPTIONS, "/**")
-                .antMatchers("/app/**/*.{js,html}")
-                .antMatchers("/i18n/**")
-                .antMatchers("/content/**")
-                .antMatchers("/h2-console/**")
-                .antMatchers("/test/**");
+    @Bean
+    public AuthenticationManager ldapAuthenticationManager(BaseLdapPathContextSource contextSource) {
+        LdapPasswordComparisonAuthenticationManagerFactory factory = new LdapPasswordComparisonAuthenticationManagerFactory(contextSource, passwordEncoder());
+        return factory.createAuthenticationManager();
+    }
+
+    @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring()
+            .requestMatchers(HttpMethod.OPTIONS, "/**")
+            .requestMatchers("/app/**/*.{js,html}")
+            .requestMatchers("/i18n/**")
+            .requestMatchers("/content/**")
+            .requestMatchers("/h2-console/**")
+            .requestMatchers("/test/**");
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
         return new JWTConfigurer(tokenProvider);
     }
 
-    @Override
-    public void configure(HttpSecurity http) throws Exception {
-// @formatter:off
-        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
             .csrf()
             .disable()
             .addFilterBefore(new ApiKeyFilter(domainUserDetailsService, secUserRepository), BasicAuthenticationFilter.class)
-            .exceptionHandling().authenticationEntryPoint(
-                    (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
-//        .and()
-//            .logout()
-//            .logoutUrl("/api/logout")
-//            .logoutSuccessHandler(ajaxLogoutSuccessHandler())
-//            .permitAll()
-        .and()
+            .exceptionHandling().authenticationEntryPoint((request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+            .and()
             .authorizeRequests()
-            .antMatchers("/api/authenticate").permitAll()
-            .antMatchers("/api/register").permitAll()
-            .antMatchers("/api/activate").permitAll()
-            .antMatchers("/api/account/resetPassword/init").permitAll()
-            .antMatchers("/api/account/resetPassword/finish").permitAll()
-            .antMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN")
-            .antMatchers("/api/**").authenticated()
-            .antMatchers("/session/admin/**").authenticated()
-            .antMatchers(HttpMethod.GET, "/server/**").permitAll()
-            .antMatchers(HttpMethod.POST, "/server/**").permitAll()
-            .antMatchers("/**").permitAll()
-//        .and()
-//            .httpBasic()
-        .and()
+            .requestMatchers("/api/authenticate").permitAll()
+            .requestMatchers("/api/register").permitAll()
+            .requestMatchers("/api/activate").permitAll()
+            .requestMatchers("/api/account/resetPassword/init").permitAll()
+            .requestMatchers("/api/account/resetPassword/finish").permitAll()
+            .requestMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN")
+            .requestMatchers("/api/**").authenticated()
+            .requestMatchers("/session/admin/**").authenticated()
+            .requestMatchers(HttpMethod.GET, "/server/**").permitAll()
+            .requestMatchers(HttpMethod.POST, "/server/**").permitAll()
+            .requestMatchers("/**").permitAll()
+            .and()
             .apply(securityConfigurerAdapter())
-        .and()
+            .and()
             .addFilter(switchUserFilter())
-                .headers()
-                .cacheControl().disable();
-        // @formatter:on
-    }
+            .headers()
+            .cacheControl().disable();
 
-//    grails.plugin.springsecurity.interceptUrlMap = [
-//        '/admin/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/admincyto/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/monitoring/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/j_spring_security_switch_user': ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/securityInfo/**': ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/api/**':      ['IS_AUTHENTICATED_REMEMBERED'],
-//        '/lib/**':      ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/css/**':      ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/images/**':   ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/*':           ['IS_AUTHENTICATED_REMEMBERED'], //if cas authentication, active this      //beta comment
-//        '/login/**':    ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/logout/**':   ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/status/**':   ['IS_AUTHENTICATED_ANONYMOUSLY']
-//]
+        return http.build();
+    }
 }

@@ -18,7 +18,6 @@ package be.cytomine.api;
 
 import be.cytomine.exceptions.*;
 import be.cytomine.utils.JsonObject;
-import com.sun.mail.smtp.SMTPSendFailedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -38,7 +37,6 @@ import java.util.Map;
 @ControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @Override
     protected ResponseEntity<Object> handleMissingServletRequestParameter(
             MissingServletRequestParameterException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  ex.getMessage()));
@@ -47,7 +45,6 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(jsonObject.toJsonString());
     }
 
-    @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(
             HttpMessageNotReadableException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         log.info("Request refused because body cannot be parsed:" + ex, ex);
@@ -57,7 +54,6 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(jsonObject.toJsonString());
     }
 
-    @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  ex.getMessage()));
