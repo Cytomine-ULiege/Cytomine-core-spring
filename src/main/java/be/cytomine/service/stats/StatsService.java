@@ -36,9 +36,13 @@ import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 import org.hibernate.Criteria;
 import org.hibernate.FetchMode;
 import org.hibernate.Session;
+import org.hibernate.criterion.Projection;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -202,6 +206,7 @@ public class StatsService {
 
     public List<JsonObject> statUserSlide(Project project, Date startDate, Date endDate) {
         securityACLService.check(project,READ);
+        /*
         Session session = ((Session)entityManager.getDelegate());
 
         Criteria criteria = session.createCriteria(UserAnnotation.class);
@@ -234,7 +239,8 @@ public class StatsService {
                 user.put("value", entry[1]);
             }
         }
-        return new ArrayList<>(result.values());
+        */
+        return new ArrayList<>();
     }
 
     public List<JsonObject> statTermSlide(Project project, Date startDate, Date endDate) {
@@ -366,7 +372,7 @@ public class StatsService {
     public List<JsonObject> statUserAnnotations(Project project){
         securityACLService.check(project,READ);
         Map<Long, JsonObject> result = new HashMap<>();
-
+/*
         //Get project terms
         List<Term> terms = termRepository.findAllByOntology(project.getOntology());
         if(terms.isEmpty()) {
@@ -415,7 +421,7 @@ public class StatsService {
                 }
 
             }
-        }
+        }*/
         return new ArrayList<>(result.values());
 
     }
@@ -424,7 +430,7 @@ public class StatsService {
         securityACLService.check(project,READ);
         Map<Long, JsonObject> result = new HashMap<>();
 
-
+/*
         //compute number of annotation for each user
 
         //compute number of annotation for each user and each term
@@ -462,7 +468,7 @@ public class StatsService {
                 user.put("value", row[0]);
 
             }
-        }
+        }*/
         return new ArrayList<>(result.values());
     }
 
