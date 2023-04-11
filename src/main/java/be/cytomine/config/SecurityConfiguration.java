@@ -25,11 +25,14 @@ import be.cytomine.security.SwitchUserFailureHandler;
 import be.cytomine.security.SwitchUserSuccessHandler;
 import be.cytomine.security.jwt.TokenProvider;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.ldap.core.support.BaseLdapPathContextSource;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -43,6 +46,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
+@Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfiguration {
@@ -94,28 +98,16 @@ public class SecurityConfiguration {
         return new MessageDigestPasswordEncoder("SHA-256");
     }
 
-    @Bean
-    public EmbeddedLdapServerContextSourceFactoryBean contextSourceFactoryBean() {
-        EmbeddedLdapServerContextSourceFactoryBean contextSourceFactoryBean = EmbeddedLdapServerContextSourceFactoryBean.fromEmbeddedLdapServer();
-        contextSourceFactoryBean.setPort(0);
-        return contextSourceFactoryBean;
-    }
-
-    @Bean
-    public AuthenticationManager ldapAuthenticationManager(BaseLdapPathContextSource contextSource) {
-        LdapPasswordComparisonAuthenticationManagerFactory factory = new LdapPasswordComparisonAuthenticationManagerFactory(contextSource, passwordEncoder());
-        return factory.createAuthenticationManager();
+    @Autowired
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(domainUserDetailsService).passwordEncoder(passwordEncoder());
     }
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring()
-            .requestMatchers(HttpMethod.OPTIONS, "/**")
-            .requestMatchers("/app/**/*.{js,html}")
-            .requestMatchers("/i18n/**")
-            .requestMatchers("/content/**")
-            .requestMatchers("/h2-console/**")
-            .requestMatchers("/test/**");
+            .requestMatchers(HttpMethod.OPTIONS, "/**");
+
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
