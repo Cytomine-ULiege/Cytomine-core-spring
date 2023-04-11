@@ -26,13 +26,12 @@ import be.cytomine.service.ontology.AnnotationIndexService;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.persistence.Tuple;
-import java.math.BigInteger;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -94,8 +93,8 @@ public class KmeansGeometryService {
         List<Tuple> resultList = nativeQuery.getResultList();
         for (Tuple tuple : resultList) {
             Kmeans kmeans = new Kmeans();
-            kmeans.setId(((Integer)tuple.get(0)).longValue());
-            kmeans.setCount(((BigInteger)tuple.get(1)).longValue());
+            kmeans.setId((Long) tuple.get(0));
+            kmeans.setCount((Long) tuple.get(1));
             kmeans.setLocation((String) tuple.get(2));
             if(kmeans.getCount()>max) {
                 max = kmeans.getCount();

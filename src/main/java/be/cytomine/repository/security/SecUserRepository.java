@@ -102,19 +102,21 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
     @EntityGraph(attributePaths = "roles")
     Optional<SecUser> findByPublicKeyAndEnabled(String accessKey, boolean enabled);
 
+/*
     @Query(value = "select distinct secUser " +
             "from AclSid as aclSid, AclEntry as aclEntry, SecUser as secUser "+
             "where aclEntry.aclObjectIdentity in (select  aclEntry.aclObjectIdentity from aclEntry where sid.id = :sidId) " +
             "and aclEntry.sid = aclSid and aclSid.sid = secUser.username and aclSid.id <> :sidId")
     List<SecUser> findAllSecUsersSharingAccesToSameProject(Long sidId);
+*/
 
     @Query(value = "SELECT id FROM acl_sid WHERE sid = :username", nativeQuery = true)
     Long getAclSidFromUsername(String username);
 
-    default List<SecUser> findAllSecUsersSharingAccesToSameProject(String username) {
+/*    default List<SecUser> findAllSecUsersSharingAccesToSameProject(String username) {
         Long aclId = getAclSidFromUsername(username);
         return findAllSecUsersSharingAccesToSameProject(aclId);
-    }
+    }*/
 
 
 }

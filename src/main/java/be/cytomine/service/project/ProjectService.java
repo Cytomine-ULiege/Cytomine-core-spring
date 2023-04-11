@@ -29,7 +29,9 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.DatedCytomineDomain;
 import be.cytomine.dto.NamedCytomineDomain;
-import be.cytomine.exceptions.*;
+import be.cytomine.exceptions.AlreadyExistException;
+import be.cytomine.exceptions.ForbiddenException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.command.CommandHistoryRepository;
 import be.cytomine.repository.command.CommandRepository;
 import be.cytomine.repository.command.RedoStackItemRepository;
@@ -63,30 +65,30 @@ import be.cytomine.utils.filters.SearchParameterProcessed;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Accumulators;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DateUtils;
-import org.bson.Document;
-import org.bson.conversions.Bson;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
-import org.springframework.security.acls.domain.BasePermission;
-import org.springframework.stereotype.Service;
-
 import jakarta.mail.MessagingException;
 import jakarta.persistence.Query;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.TupleElement;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DateUtils;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.acls.domain.BasePermission;
+import org.springframework.stereotype.Service;
+
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static be.cytomine.service.social.ImageConsultationService.DATABASE_NAME;
 import static com.mongodb.client.model.Aggregates.*;
-import static com.mongodb.client.model.Aggregates.sort;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
-import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.descending;
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -503,7 +505,7 @@ public class ProjectService extends ModelService {
         for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
             query.setParameter(entry.getKey(), entry.getValue());
         }
-        long count = ((BigInteger)query.getResultList().get(0)).longValue();
+        long count = (long) query.getResultList().get(0);
         Page<JsonObject> page = PageUtils.buildPageFromPageResults(results, max, offset, count);
         return page;
 

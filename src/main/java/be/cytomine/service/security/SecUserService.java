@@ -400,7 +400,7 @@ public class SecUserService extends ModelService {
         for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
             query.setParameter(entry.getKey(), entry.getValue());
         }
-        long count = ((BigInteger) query.getResultList().get(0)).longValue();
+        long count = (long) query.getResultList().get(0);
 
         Page<Map<String, Object>> page = PageUtils.buildPageFromPageResults(results, max, offset, count);
         return page;
@@ -921,20 +921,20 @@ public class SecUserService extends ModelService {
     /**
      * Get all user that share at least a same project as user from argument
      */
-    public List<SecUser> getAllFriendsUsers(SecUser user) {
+/*    public List<SecUser> getAllFriendsUsers(SecUser user) {
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
         return secUserRepository.findAllSecUsersSharingAccesToSameProject(user.getUsername());
-    }
+    }*/
 
     /**
      * Get all online user that share at least a same project as user from argument
      */
     public List<SecUser> getAllFriendsUsersOnline(SecUser user) {
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
-        List<SecUser> friends = getAllFriendsUsers(user);
+        /*List<SecUser> friends = getAllFriendsUsers(user);*/
         List<SecUser> friendsOnline = getAllOnlineUsers().stream()
                 .distinct()
-                .filter(friends::contains)
+                /*.filter(friends::contains)*/
                 .collect(Collectors.toList());
         return friendsOnline;
     }

@@ -426,7 +426,7 @@ public class ImageInstanceService extends ModelService {
         for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
             query.setParameter(entry.getKey(), entry.getValue());
         }
-        long count = ((BigInteger)query.getResultList().get(0)).longValue();
+        long count = (long) query.getResultList().get(0);
         Page<Map<String, Object>> page = PageUtils.buildPageFromPageResults(results, max, offset, count);
         return page;
 
@@ -620,7 +620,7 @@ public class ImageInstanceService extends ModelService {
         for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
             query.setParameter(entry.getKey(), entry.getValue());
         }
-        long count = ((BigInteger)query.getResultList().get(0)).longValue();
+        long count = (long) query.getResultList().get(0);
 
         if(light) {
             List<Map<String,Object>> lightResult = new ArrayList<>();
