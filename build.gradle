@@ -59,7 +59,7 @@ dependencies {
 	implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.10.4"
 	implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.4"
 	implementation "com.fasterxml.jackson.core:jackson-databind:2.10.4"
-	implementation 'org.hibernate:hibernate-spatial:5.3.10.Final'
+	implementation 'org.hibernate:hibernate-spatial:6.2.0.Final'
 	implementation "commons-codec:commons-codec:1.6"
 
 	implementation 'org.springframework.security:spring-security-acl'

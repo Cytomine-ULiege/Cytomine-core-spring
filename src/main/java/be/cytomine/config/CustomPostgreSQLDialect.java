@@ -18,11 +18,10 @@ package be.cytomine.config;
 
 import be.cytomine.utils.LTreeType;
 import com.vladmihalcea.hibernate.type.array.LongArrayType;
-import org.hibernate.spatial.dialect.postgis.PostgisDialect;
 
 import java.sql.Types;
 
-public class CustomPostgreSQLDialect extends PostgisDialect {
+public class CustomPostgreSQLDialect {
 
 
     public CustomPostgreSQLDialect () {
