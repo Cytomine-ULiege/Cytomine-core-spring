@@ -71,7 +71,6 @@ public class UploadedFile extends CytomineDomain implements Serializable {
     private int status = 0;
 
     @Column(columnDefinition = "ltree")
-    @Convert(converter = be.cytomine.utils.LTreeType.class)
     private String lTree;
 
     @Override
