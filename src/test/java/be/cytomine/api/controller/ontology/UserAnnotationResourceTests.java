@@ -19,6 +19,7 @@ package be.cytomine.api.controller.ontology;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
@@ -57,6 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -89,6 +91,9 @@ public class UserAnnotationResourceTests {
 
     @Autowired
     private MockMvc restAnnotationDomainControllerMockMvc;
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
@@ -286,7 +291,7 @@ public class UserAnnotationResourceTests {
     public void download_user_annotation_xls_document() throws Exception {
         buildDownloadContext();
         MvcResult mvcResult = performDownload("xls");
-        checkResult(";", mvcResult);
+        checkXLSResult( mvcResult);
     }
 
     @Test
@@ -315,7 +320,11 @@ public class UserAnnotationResourceTests {
     }
 
     private void checkResult(String delimiter, MvcResult result) throws UnsupportedEncodingException {
-        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.userAnnotation, this.project, this.image, this.me, this.term, "userannotation");
+        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.userAnnotation, this.project, this.image, this.me, this.term, "userannotation", applicationProperties.getServerURL());
+    }
+
+    private void checkXLSResult( MvcResult result) throws IOException {
+        TestUtils.checkSpreadsheetXLSAnnotationResult( result, this.userAnnotation, this.project, this.image, this.me, this.term, "userannotation", applicationProperties.getServerURL());
     }
 
     private MvcResult performDownload(String format) throws Exception {

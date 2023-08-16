@@ -19,6 +19,7 @@ package be.cytomine.api.controller.ontology;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
@@ -53,6 +54,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -95,6 +97,9 @@ public class ReviewedAnnotationResourceTests {
 
     @Autowired
     private ReviewedAnnotationRepository reviewedAnnotationRepository;
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
@@ -246,7 +251,7 @@ public class ReviewedAnnotationResourceTests {
     public void download_reviewed_annotation_xls_document() throws Exception {
         buildDownloadContext();
         MvcResult mvcResult = performDownload("xls");
-        checkResult(";", mvcResult);
+        checkXLSResult( mvcResult);
     }
 
     @Test
@@ -286,7 +291,11 @@ public class ReviewedAnnotationResourceTests {
     }
 
     private void checkResult(String delimiter, MvcResult result) throws UnsupportedEncodingException {
-        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.reviewedAnnotation, this.project, this.image, this.me, this.term, "reviewedannotation");
+        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.reviewedAnnotation, this.project, this.image, this.me, this.term, "reviewedannotation", applicationProperties.getServerURL());
+    }
+
+    private void checkXLSResult( MvcResult result) throws IOException {
+        TestUtils.checkSpreadsheetXLSAnnotationResult( result, this.reviewedAnnotation, this.project, this.image, this.me, this.term, "reviewedannotation", applicationProperties.getServerURL());
     }
 
     @Test
