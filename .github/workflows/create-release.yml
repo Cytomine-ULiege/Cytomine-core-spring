@@ -41,14 +41,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get JAR file
-        uses: actions/download-artifact@v3
-        with:
-          name: cytomine-jar
-
-      - name: Rename the JAR file
-        run: mv cytomine.jar cytomine-${{ github.ref_name }}.jar
-
       - name: Prerelease check
         run: |
           if [[ ${{ github.ref_name }} =~ ^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$ ]]; then
