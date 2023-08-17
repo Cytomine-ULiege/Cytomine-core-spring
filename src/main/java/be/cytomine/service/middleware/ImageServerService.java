@@ -16,7 +16,7 @@ package be.cytomine.service.middleware;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.image.*;
@@ -77,7 +77,7 @@ public class ImageServerService extends ModelService {
     private SimplifyGeometryService simplifyGeometryService;
 
     @Autowired
-    private ApplicationConfiguration applicationConfiguration;
+    private ApplicationProperties applicationProperties;
 
     @Autowired
     public void setImageInstanceService(ImageInstanceService imageInstanceService) {
@@ -122,7 +122,13 @@ public class ImageServerService extends ModelService {
     }
 
     public String downloadUri(AbstractImage abstractImage) throws IOException {
-        return downloadUri(abstractImage.getUploadedFile());
+        UploadedFile uploadedFile = abstractImage.getUploadedFile();
+        if (uploadedFile.getPath()==null || uploadedFile.getPath().trim().equals("")) {
+            throw new InvalidRequestException("Uploaded file has no valid path.");
+        }
+        // It gets the file specified in the uri.
+        String uri = "/image/"+URLEncoder.encode(uploadedFile.getPath() ,StandardCharsets.UTF_8) +"/export";
+        return uploadedFile.getImageServer().getUrl()+uri;
     }
 
     public String downloadUri(CompanionFile companionFile) throws IOException {
@@ -220,8 +226,8 @@ public class ImageServerService extends ModelService {
     }
 
     private String hmsInternalUrl() {
-        String url = applicationConfiguration.getHyperspectralServerURL();
-        return (applicationConfiguration.getUseHTTPInternally()) ? url.replace("https", "http") : url;
+        String url = applicationProperties.getHyperspectralServerURL();
+        return (applicationProperties.getUseHTTPInternally()) ? url.replace("https", "http") : url;
     }
 
     //TODO
@@ -230,7 +236,7 @@ public class ImageServerService extends ModelService {
             throw new InvalidRequestException("Companion file has no valid path.");
         }
         LinkedHashMap parameters = new LinkedHashMap();
-        parameters.put("fif", applicationConfiguration.getStoragePath() + "/" + cf.getPath());
+        parameters.put("fif", applicationProperties.getStoragePath() + "/" + cf.getPath());
         return parameters;
     }
 
@@ -767,12 +773,6 @@ public class ImageServerService extends ModelService {
         String parameterUrl = "";
         String fullUrl = "";
 
-        //TODO:
-//        if (responseContentType == "image/webp") {
-//            // Avoid parser registry to throw a warning for unknown content type
-//            def parserRegistry = http.getParser()
-//            parserRegistry.putAt("image/webp", parserRegistry.getDefaultParser())
-//        }
         String responseContentType = formatToContentType(format);
 
         try {
@@ -782,49 +782,40 @@ public class ImageServerService extends ModelService {
             HttpClient httpClient = HttpClient.newBuilder()
                     .version(HttpClient.Version.HTTP_1_1)
                     .build();
-        if ((fullUrl).length() < GET_URL_MAX_LENGTH && (httpMethod==null || httpMethod.equals("GET"))) {
-            log.debug("GET " + fullUrl);
-            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                    .GET()
-                    .uri(URI.create(fullUrl))
-                    .setHeader("content-type", "application/x-www-form-urlencoded")
-                    .setHeader("Accept", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
-            for (Map.Entry<String, Object> entry : headers.entrySet()) {
-                requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
-            }
 
-            HttpRequest request = requestBuilder.build();
-
-            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            return processResponse(fullUrl, responseContentType, response);
-        } else {
-            log.debug("POST " + imageServerInternalUrl + path);
-            log.debug(JsonObject.toJsonString(parameters));
-            String requestContentType = "application/json";
-            if (hms) {
-                requestContentType = "application/x-www-form-urlencoded";
-            }
-
-            HttpRequest.BodyPublisher bodyPublisher;
-            if(hms) {
-                bodyPublisher = HttpRequest.BodyPublishers.ofString(StringUtils.urlEncodeUTF8(parameters));
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder();
+            if ((fullUrl).length() < GET_URL_MAX_LENGTH && (httpMethod==null || httpMethod.equals("GET"))) {
+                log.debug("GET " + fullUrl);
+                requestBuilder.GET()
+                        .uri(URI.create(fullUrl));
             } else {
-                bodyPublisher = HttpRequest.BodyPublishers.ofString(JsonObject.toJsonString(parameters));
+                log.debug("POST " + imageServerInternalUrl + path);
+                log.debug(JsonObject.toJsonString(parameters));
+                String requestContentType = "application/json";
+                if (hms) {
+                    requestContentType = "application/x-www-form-urlencoded";
+                }
+
+                HttpRequest.BodyPublisher bodyPublisher;
+                if(hms) {
+                    bodyPublisher = HttpRequest.BodyPublishers.ofString(StringUtils.urlEncodeUTF8(parameters));
+                } else {
+                    bodyPublisher = HttpRequest.BodyPublishers.ofString(JsonObject.toJsonString(parameters));
+                }
+
+                requestBuilder.POST(bodyPublisher)
+                        .uri(URI.create(imageServerInternalUrl + path))
+                        .setHeader("content-type", requestContentType);
             }
-
-            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                    .POST(bodyPublisher)
-                    .uri(URI.create(imageServerInternalUrl + path))
-                    .setHeader("Accept", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
-                    .setHeader("content-type", "application/json");
-
+            requestBuilder.setHeader("Accept", responseContentType);
             for (Map.Entry<String, Object> entry : headers.entrySet()) {
                 requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
             }
             HttpRequest request = requestBuilder.build();
             HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
             return processResponse(fullUrl, responseContentType, response);
-        }
+        } catch(NotModifiedException e){
+            throw e;
         } catch(Exception e){
             log.error("Error for url : " + fullUrl + " with parameters " + parameterUrl, e);
             throw new InvalidRequestException("Cannot generate thumb for " + fullUrl + " with " + parameterUrl);
