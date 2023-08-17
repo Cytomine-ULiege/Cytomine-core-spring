@@ -30,6 +30,9 @@ jobs:
       - name: Create JAR file
         run: ./gradlew bootJar
 
+      - name: Rename the JAR file
+        run: mv cytomine.jar ${{ env.JAR_FILE }}
+
       - name: Store the artifact
         uses: actions/upload-artifact@v3
         with:
@@ -58,7 +61,7 @@ jobs:
                 generate_release_notes: true,
                 name: ${{ github.ref_name }},
                 owner: context.repo.owner,
-                prerelease: $prerelease,
+                prerelease: ${{ env.prerelease }},
                 repo: context.repo.repo,
                 tag_name: ${{ github.ref_name }},
               });
@@ -89,7 +92,7 @@ jobs:
                 data: ${{ env.JAR_FILE }},
                 name: ${{ env.JAR_FILE }},
                 owner: context.repo.owner,
-                release_id: $release_id,
+                release_id: ${{ env.release_id }},
                 repo: context.repo.repo,
               });
             } catch (error) {
