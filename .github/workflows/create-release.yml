@@ -43,7 +43,7 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     outputs:
-      release_id: ${{ steps.release-creation.outputs.release_id }}
+      release_id: ${{ steps.export-release-id.outputs.release_id }}
 
     steps:
       - name: Prerelease check
@@ -71,11 +71,15 @@ jobs:
                 repo: context.repo.repo,
                 tag_name: process.env.name,
               });
-            
-              core.exportVariable("release_id", response.data.id);
+              
+              return response.data.id;
             } catch (error) {
               core.setFailed(error.message);
             }
+
+      - name: Export release id
+        id: export-release-id
+        run: echo "release_id=${{ steps.release-creation.outputs.result }}" >> $GITHUB_OUTPUT
 
   upload-release-asset:
     needs:
