@@ -42,6 +42,8 @@ jobs:
 
   create-release:
     runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.release-creation.outputs.release_id }}
 
     steps:
       - name: Prerelease check
@@ -53,6 +55,7 @@ jobs:
           fi
 
       - name: Create release
+        id: release-creation
         uses: actions/github-script@v6
         env:
           name: ${{ github.ref_name }}
@@ -88,14 +91,17 @@ jobs:
 
       - name: Upload release asset
         uses: actions/github-script@v6
+        env:
+          name: ${{ env.JAR_FILE }}
+          release_id: ${{ needs.create-release.outputs.release_id }}
         with:
           script: |
             try {
               github.rest.repos.uploadReleaseAsset({
-                data: ${{ env.JAR_FILE }},
-                name: ${{ env.JAR_FILE }},
+                data: process.env.name,
+                name: process.env.name,
                 owner: context.repo.owner,
-                release_id: ${{ env.release_id }},
+                release_id: process.env.release_id,
                 repo: context.repo.repo,
               });
             } catch (error) {
