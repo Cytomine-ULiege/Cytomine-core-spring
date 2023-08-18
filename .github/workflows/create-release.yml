@@ -56,7 +56,7 @@ jobs:
         uses: actions/github-script@v6
         env:
           name: ${{ github.ref_name }}
-          prerelease: ${{ env.prerelease == "true" }}
+          prerelease: ${{ env.prerelease }}
         with:
           script: |
             try {
@@ -64,7 +64,7 @@ jobs:
                 generate_release_notes: true,
                 name: process.env.name,
                 owner: context.repo.owner,
-                prerelease: process.env.prerelease,
+                prerelease: process.env.prerelease === "true",
                 repo: context.repo.repo,
                 tag_name: process.env.name,
               });
