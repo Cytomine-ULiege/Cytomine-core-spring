@@ -68,11 +68,11 @@ jobs:
                 repo: context.repo.repo,
                 tag_name: process.env.name,
               });
+            
+              core.exportVariable("release_id", response.data.id);
             } catch (error) {
               core.setFailed(error.message);
             }
-            
-            core.exportVariable("release_id", response.data.id);
 
   upload-release-asset:
     needs:
