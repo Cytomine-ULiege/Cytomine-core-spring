@@ -31,13 +31,13 @@ jobs:
         run: ./gradlew bootJar
 
       - name: Rename the JAR file
-        run: mv cytomine.jar ${{ env.JAR_FILE }}
+        run: mv build/libs/cytomine.jar build/libs/${{ env.JAR_FILE }}
 
       - name: Store the artifact
         uses: actions/upload-artifact@v3
         with:
-          name: cytomine-jar
-          path: build/libs/cytomine.jar
+          name: ${{ env.JAR_FILE }}
+          path: build/libs/${{ env.JAR_FILE }}
           retention-days: 1
 
   create-release:
@@ -56,7 +56,7 @@ jobs:
         uses: actions/github-script@v6
         env:
           name: ${{ github.ref_name }}
-          prerelease: ${{ env.prerelease }}
+          prerelease: ${{ env.prerelease == "true" }}
         with:
           script: |
             try {
