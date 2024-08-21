@@ -27,13 +27,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.meta.Property;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.WireMockHelper;
 
@@ -43,13 +40,8 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 @Transactional
 public class MetadataSearchServiceTests {
 
-    private final IndexCoordinates index = IndexCoordinates.of("properties");
-
     @Autowired
     BasicInstanceBuilder builder;
-
-    @Autowired
-    ElasticsearchOperations operations;
 
     @Autowired
     MetadataSearchService metadataSearchService;
@@ -141,18 +133,9 @@ public class MetadataSearchServiceTests {
 
     @Test
     void list_no_suggestions_for_wrong_value() {
-        AbstractImage ai = builder.given_an_abstract_image();
-        String key = "key";
-        Property p1 = builder.given_a_property(ai, key, "value1");
-        Property p2 = builder.given_a_property(ai, key, "value2");
+        wireMockHelper.stubElasticAutoCompleteApiReturnEmpty();
 
-        for (Property p : Arrays.asList(p1, p2)) {
-            operations.save(p, index);
-        }
-        /* Let elasticsearch refresh the indices */
-        operations.indexOps(index).refresh();
-
-        List<String> actualSuggestions = metadataSearchService.searchAutoCompletion(key, "wrong");
+        List<String> actualSuggestions = metadataSearchService.searchAutoCompletion("key", "wrong");
         List<String> expectedSuggestions = List.of();
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
@@ -160,16 +143,7 @@ public class MetadataSearchServiceTests {
 
     @Test
     void list_no_suggestions_for_wrong_key() {
-        AbstractImage ai = builder.given_an_abstract_image();
-        String key = "key";
-        Property p1 = builder.given_a_property(ai, key, "value1");
-        Property p2 = builder.given_a_property(ai, key, "value2");
-
-        for (Property p : Arrays.asList(p1, p2)) {
-            operations.save(p, index);
-        }
-        /* Let elasticsearch refresh the indices */
-        operations.indexOps(index).refresh();
+        wireMockHelper.stubElasticAutoCompleteApiReturnEmpty();
 
         List<String> actualSuggestions = metadataSearchService.searchAutoCompletion("wrong", "");
         List<String> expectedSuggestions = List.of();
@@ -179,18 +153,9 @@ public class MetadataSearchServiceTests {
 
     @Test
     void list_all_suggestions_for_partial_value() {
-        AbstractImage ai = builder.given_an_abstract_image();
-        String key = "key";
-        Property p1 = builder.given_a_property(ai, key, "value1");
-        Property p2 = builder.given_a_property(ai, key, "value2");
+        wireMockHelper.stubElasticAutoCompleteApiReturnResults(List.of("value1", "value2"));
 
-        for (Property p : Arrays.asList(p1, p2)) {
-            operations.save(p, index);
-        }
-        /* Let elasticsearch refresh the indices */
-        operations.indexOps(index).refresh();
-
-        List<String> actualSuggestions = metadataSearchService.searchAutoCompletion(key, "val");
+        List<String> actualSuggestions = metadataSearchService.searchAutoCompletion("key", "val");
         List<String> expectedSuggestions = List.of("value1", "value2");
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
@@ -198,18 +163,9 @@ public class MetadataSearchServiceTests {
 
     @Test
     void list_exact_suggestion_for_value() {
-        AbstractImage ai = builder.given_an_abstract_image();
-        String key = "key";
-        Property p1 = builder.given_a_property(ai, key, "value1");
-        Property p2 = builder.given_a_property(ai, key, "value2");
+        wireMockHelper.stubElasticAutoCompleteApiReturnResults(List.of("value1"));
 
-        for (Property p : Arrays.asList(p1, p2)) {
-            operations.save(p, index);
-        }
-        /* Let elasticsearch refresh the indices */
-        operations.indexOps(index).refresh();
-
-        List<String> actualSuggestions = metadataSearchService.searchAutoCompletion(key, "value1");
+        List<String> actualSuggestions = metadataSearchService.searchAutoCompletion("key", "value1");
         List<String> expectedSuggestions = List.of("value1");
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
@@ -217,19 +173,9 @@ public class MetadataSearchServiceTests {
 
     @Test
     void list_all_suggestions_for_empty_value() {
-        AbstractImage ai = builder.given_an_abstract_image();
-        String key = "key";
-        Property p1 = builder.given_a_property(ai, key, "value1");
-        Property p2 = builder.given_a_property(ai, key, "value2");
-        Property p3 = builder.given_a_property(ai, key, "value3");
+        wireMockHelper.stubElasticAutoCompleteApiReturnResults(List.of("value1", "value2", "value3"));
 
-        for (Property p : Arrays.asList(p1, p2, p3)) {
-            operations.save(p, index);
-        }
-        /* Let elasticsearch refresh the indices */
-        operations.indexOps(index).refresh();
-
-        List<String> actualSuggestions = metadataSearchService.searchAutoCompletion(key, "");
+        List<String> actualSuggestions = metadataSearchService.searchAutoCompletion("key", "");
         List<String> expectedSuggestions = List.of("value1", "value2", "value3");
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
