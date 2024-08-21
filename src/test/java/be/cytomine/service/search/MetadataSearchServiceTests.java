@@ -15,11 +15,13 @@ package be.cytomine.service.search;
  * limitations under the License.
  */
 
-import be.cytomine.BasicInstanceBuilder;
-import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.meta.Property;
-import be.cytomine.utils.JsonObject;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import javax.transaction.Transactional;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,10 +30,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 
-import javax.transaction.Transactional;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import be.cytomine.BasicInstanceBuilder;
+import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.meta.Property;
+import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.WireMockHelper;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
@@ -50,32 +54,33 @@ public class MetadataSearchServiceTests {
     @Autowired
     MetadataSearchService metadataSearchService;
 
+    private WireMockServer wireMockServer;
+
+    private WireMockHelper wireMockHelper;
+
     @BeforeEach
     public void setup() {
-        operations.indexOps(index).create();
+        wireMockServer = new WireMockServer(9200); // Use port 9200 as it is the default Elasticsearch port
+        wireMockServer.start();
+        wireMockHelper = new WireMockHelper(wireMockServer);
+
+        WireMock.configureFor("localhost", wireMockServer.port());
     }
 
     @AfterEach
     public void clean() {
-        operations.indexOps(index).delete();
+        wireMockServer.stop();
     }
 
     @Test
     void list_all_images_by_string_filters() {
         AbstractImage ai1 = builder.given_an_abstract_image();
         AbstractImage ai2 = builder.given_an_abstract_image();
-        Property p1 = builder.given_a_property(ai1, "key1", "value");
-        Property p2 = builder.given_a_property(ai1, "key2", "2000");
-        Property p3 = builder.given_a_property(ai2, "key3", "7000");
-
-        for (Property p : Arrays.asList(p1, p2, p3)) {
-            operations.save(p, index);
-        }
-        /* Let elasticsearch refresh the indices */
-        operations.indexOps(index).refresh();
 
         HashMap<String, Object> query = new HashMap<>();
-        query.put("key1", "val");
+        query.put("test-key", "test-value");
+
+        wireMockHelper.stubElasticSearchApi(ai1.getId(), query.size());
 
         HashMap<String, Object> parameters = new HashMap<>();
         parameters.put("imageIds", Arrays.asList(ai1.getId().intValue(), ai2.getId().intValue()));
@@ -93,17 +98,11 @@ public class MetadataSearchServiceTests {
     void list_all_images_by_number_filters() {
         AbstractImage ai1 = builder.given_an_abstract_image();
         AbstractImage ai2 = builder.given_an_abstract_image();
-        Property p1 = builder.given_a_property(ai1, "key1", "value");
-        Property p2 = builder.given_a_property(ai1, "key2", "2000");
-
-        for (Property p : Arrays.asList(p1, p2)) {
-            operations.save(p, index);
-        }
-        /* Let elasticsearch refresh the indices */
-        operations.indexOps(index).refresh();
 
         HashMap<String, Object> query = new HashMap<>();
-        query.put("key2", Arrays.asList(1000, 2000));
+        query.put("test-key", Arrays.asList(0, 2000));
+
+        wireMockHelper.stubElasticSearchApi(ai1.getId(), query.size());
 
         HashMap<String, Object> parameters = new HashMap<>();
         parameters.put("imageIds", Arrays.asList(ai1.getId().intValue(), ai2.getId().intValue()));
@@ -121,18 +120,12 @@ public class MetadataSearchServiceTests {
     void list_all_images_by_mixed_filters() {
         AbstractImage ai1 = builder.given_an_abstract_image();
         AbstractImage ai2 = builder.given_an_abstract_image();
-        Property p1 = builder.given_a_property(ai1, "key1", "value");
-        Property p2 = builder.given_a_property(ai1, "key2", "2000");
-
-        for (Property p : Arrays.asList(p1, p2)) {
-            operations.save(p, index);
-        }
-        /* Let elasticsearch refresh the indices */
-        operations.indexOps(index).refresh();
 
         HashMap<String, Object> query = new HashMap<>();
         query.put("key1", "val");
-        query.put("key2", Arrays.asList(1000, 2000));
+        query.put("test-key", Arrays.asList(0, 2000));
+
+        wireMockHelper.stubElasticSearchApi(ai1.getId(), query.size());
 
         HashMap<String, Object> parameters = new HashMap<>();
         parameters.put("imageIds", Arrays.asList(ai1.getId().intValue(), ai2.getId().intValue()));
