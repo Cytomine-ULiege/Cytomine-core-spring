@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -157,7 +158,7 @@ public class RetrievalServiceTests {
         String expectedUrlPath = "/api/search";
         SearchResponse expectedResponse = new SearchResponse(
             annotation.getId().toString(),
-            annotation.getProject().getId().toString(),
+            List.of(annotation.getProject().getId().toString()),
             "annotation",
             Arrays.asList(
                 Arrays.asList(annotation.getId().toString(), 0.0),
