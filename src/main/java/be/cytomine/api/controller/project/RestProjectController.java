@@ -138,7 +138,6 @@ public class RestProjectController extends RestCytomineController {
     public ResponseEntity<String> lastAction(
             @PathVariable Long id,
             @PathVariable Long max
-
     ) {
         log.debug("REST request to list last project actions");
         Project project = projectRepository.findById(id)
